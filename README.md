@@ -1,5 +1,51 @@
 # PDF to PPTX Converter (v2)
 
+## 서비스 정보
+
+> 최종 확인: 2026-07-22
+
+| 항목 | 값 |
+|---|---|
+| 서비스 URL | https://pdf2pptx-v2.pages.dev/ |
+| 상태 | ⚠️ **기능 불능** — 번들에 박힌 Gemini 키가 이미 폐기되어 AI 호출이 실패한다 |
+| 위치 | ⚗️ **실험 버전** — AI Studio 기반으로 만든 시험작이며 상시 사용하지 않는다 |
+| 호스팅 | Cloudflare Pages — 프로젝트명 `pdf2pptx-v2`, GitHub `ahnbu/pdf2pptx_v2` 연결 |
+| DB | ❌ 없음 (브라우저 내 변환) |
+| 인증 | ❌ 없음 |
+| 외부 API | Google Gemini (`@google/genai`) |
+| 배포 방식 | CF Pages 자동 빌드 (레포에 설정 파일 없음 — 대시보드 연결) |
+| 필요 환경변수 | `GEMINI_API_KEY`, `VITE_GOOGLE_API_KEY` |
+
+> [!WARNING]
+> **번들에 박힌 Gemini 키가 이미 폐기되어 AI 기능이 동작하지 않는다.** (확인: 2026-07-22)
+>
+> `https://pdf2pptx-v2.pages.dev/assets/index-*.js`에 키(식별자 `AIzaSyD8i0`로 시작, `vpBs`로 끝남)가 평문으로 들어 있었으나, Google Generative Language API에 해당 키로 실호출한 결과 `HTTP 400 · "API key not valid" · API_KEY_INVALID`가 반환되었다.
+>
+> 즉 **유출 리스크는 이미 해소된 상태**다(키가 무효라 악용 불가). 대신 서비스가 동작하지 않는다.
+>
+> 로컬 `.env`·`color_prompt/.env`·`link-cleaner/.env.local`에도 같은 폐기된 키가 남아 있다. 현행 유효 키는 `~/.env`에 있다.
+>
+> **구조적 문제는 남아 있다.** `VITE_GOOGLE_API_KEY`를 클라이언트에서 직접 쓰는 한, 유효한 키로 재배포하면 그 키가 다시 노출된다. 복구할 경우 **서버 경유 호출(CF Pages Functions)로 전환**하거나, 최소한 이 프로젝트 전용 키를 별도 발급해 영향을 격리할 것.
+>
+> 실험 버전이므로 **복구하지 않고 두는 것도 합리적 선택**이다.
+
+### ⚠️ 활성 서비스로 전환 시 선결 과제
+
+이 프로젝트를 상시 사용 서비스로 승격하려면 아래를 먼저 해결해야 한다. **키만 교체하고 배포하면 그 키가 즉시 공개된다.**
+
+| # | 과제 | 현재 상태 | 조치 |
+|---|---|---|---|
+| 1 | **Gemini 키 클라이언트 노출** | `VITE_GOOGLE_API_KEY`가 번들에 평문 삽입됨 | CF Pages Functions로 서버 경유 호출 전환. `color_prompt`의 `functions/api/generate.js`가 참고 구현 |
+| 2 | 유효 키 재주입 | 폐기된 키가 박혀 있어 AI 호출 실패 | 1번 완료 후 CF 대시보드 환경변수로 주입 (레포에 두지 말 것) |
+| 3 | 키 격리 | 4개 프로젝트가 동일 키 공유 | 이 프로젝트 전용 키 발급 |
+| 4 | 테스트 부재 | 테스트 코드 0건 | 최소 배포 후 스모크 테스트. 이번 키 폐기도 사전에 잡히지 않았다 |
+
+> 1번을 건너뛰면 나머지는 의미가 없다. **순서를 지킬 것.**
+
+> ℹ️ **혼동 주의**: `pdf2pptx.pages.dev`(v2 없음)는 **별개 서비스**다. 그쪽은 `notebooklm_logo_cleaner` 레포를 서빙하며, 기능이 비슷하지만 다른 프로젝트다. 둘은 의도적으로 병존한다.
+
+---
+
 본 프로젝트는 PDF 파일을 분석하여 편집 가능한 파워포인트(PPTX) 파일로 변환하는 웹 애플리케이션입니다. [Google AI Studio](https://aistudio.google.com/) 환경에서 개발된 코드를 로컬 및 배포 환경에 최적화하여 구성되었습니다.
 
 ## 🛠 시스템 아키텍처 및 상세 로직
